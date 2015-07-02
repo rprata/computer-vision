@@ -4,11 +4,18 @@
 #include <QtGui>
 #include <QMouseEvent>
 #include <IL/il.h>
+#include <bitset>
+
+#include "Points.h"
+
+typedef unsigned char BYTE;
 
 class QTWindow: public QLabel
 {
 private:   
-  QMessageBox* msgBox;
+  int imageInputWidth;
+  int imageInputHeight;
+  BYTE * pixmapInput;
 
 public:    
 	QTWindow(){};
