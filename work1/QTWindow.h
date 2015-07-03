@@ -23,6 +23,7 @@ public:
 
 	void mousePressEvent (QMouseEvent * event); 
 	void setupWindow(QTWindow * window, const char * title, const char * picturePath);
+	void saveImage(const char * outputFilename, BYTE * imgData, int width, int height);
 
 };
 

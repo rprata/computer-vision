@@ -3,25 +3,26 @@
 
 void CVMath::setupMatrix()
 {
-	TPoints imagePoints = Points::getInstance().getImagePoints();
-	xi1 = imagePoints.p1.first;
-	yi1 = imagePoints.p1.second;
-	xi2 = imagePoints.p2.first;
-	yi2 = imagePoints.p2.second;
-	xi3 = imagePoints.p3.first;
-	yi3 = imagePoints.p3.second;
-	xi4 = imagePoints.p4.first;
-	yi4 = imagePoints.p4.second;
 	
 	TPoints realPoints = Points::getInstance().getRealPoints();
-	xf1 = realPoints.p1.first;
-	yf1 = realPoints.p1.second;
-	xf2 = realPoints.p2.first;
-	yf2 = realPoints.p2.second;
-	xf3 = realPoints.p3.first;
-	yf3 = realPoints.p3.second;
-	xf4 = realPoints.p4.first;
-	yf4 = realPoints.p4.second;
+	xi1 = realPoints.p1.first;
+	yi1 = realPoints.p1.second;
+	xi2 = realPoints.p2.first;
+	yi2 = realPoints.p2.second;
+	xi3 = realPoints.p3.first;
+	yi3 = realPoints.p3.second;
+	xi4 = realPoints.p4.first;
+	yi4 = realPoints.p4.second;
+
+	TPoints imagePoints = Points::getInstance().getImagePoints();
+	xf1 = imagePoints.p1.first;
+	yf1 = imagePoints.p1.second;
+	xf2 = imagePoints.p2.first;
+	yf2 = imagePoints.p2.second;
+	xf3 = imagePoints.p3.first;
+	yf3 = imagePoints.p3.second;
+	xf4 = imagePoints.p4.first;
+	yf4 = imagePoints.p4.second;
 
 	A = MatrixXf (8, 8);
 	A << xi1, yi1, 1, 0, 0, 0, -xi1*xf1, -yi1*xf1,
@@ -41,6 +42,7 @@ void CVMath::solveEquation()
 {
 	X = A.fullPivLu().solve(B);
 	std::cout << "The solution is:\n" << X << std::endl;
+
 	h11 = X(0);
 	h12 = X(1);
 	h13 = X(2);
@@ -57,11 +59,88 @@ void CVMath::solveEquation()
 
 }
 
-void CVMath::InvertMatrixH()
+void CVMath::invertMatrixH()
 {
-	std::cout << "Inverse Matrix H is:\n" << H.inverse() << std::endl;
+	H_INV = MatrixXf(3, 3);
+	H_INV = H.inverse();
+}
+
+void CVMath::generateImageArray(unsigned char * imgArray, unsigned char * pixmapInput, int * width, int * height, int originalWidth, int originalHeight)
+{
+	//primeiro, vamos avaliar o tamanho da imagem através dos 4 cantos
 	VectorXf in(3);
-	in << 337, 562, 1;
-	VectorXf out = H*in;
-	std::cout << "Inverse Matrix out is:\n" << out/out(2) << std::endl;
+	VectorXf out;
+	
+	int minX = 0, minY = 0, maxX = 0, maxY = 0;
+
+	in << 0, 0, 1;
+	out = H_INV * in;
+	out /= out(2);
+
+	minX = maxX = out(0);
+	minY = maxY = out(1);
+
+	in << 0, 600, 1;
+	out = H_INV * in;
+	out /= out(2);
+		
+	if (out(0) < minX)
+		minX = out(0);
+	if (out(0) > maxX)
+		maxX = out(0);
+
+	if (out(1) < minY)
+		minY = out(1);
+	if (out(1) > maxY)
+		maxY = out(1);
+
+	in << 800, 600, 1;
+	out = H_INV * in;
+	out /= out(2);
+	
+	if (out(0) < minX)
+		minX = out(0);
+	if (out(0) > maxX)
+		maxX = out(0);
+
+	if (out(1) < minY)
+		minY = out(1);
+	if (out(1) > maxY)
+		maxY = out(1);
+
+	in << 800, 0, 1;
+	out = H_INV * in;
+	out /= out(2);
+	
+	if (out(0) < minX)
+		minX = out(0);
+	if (out(0) > maxX)
+		maxX = out(0);
+
+	if (out(1) < minY)
+		minY = out(1);
+	if (out(1) > maxY)
+		maxY = out(1);
+
+	// calculando os valores de largura e altura da nova imagem
+	*width = maxX - minX;
+	*height = maxY - minY;
+
+	//gerando nova imagem;
+	for (int i = 0; i < originalHeight; i++)
+	{
+		for (int j = 0; j < originalWidth; j++)
+		{
+			in << j, i, 1;
+			out = H_INV * in;
+			out /= out(2);
+
+			int x = (maxX - out(0))*originalWidth/(*width);
+			int y = (maxY - out(1))*originalHeight/(*height);
+
+			imgArray[3*(originalWidth*y + x)]  = pixmapInput[3*(originalWidth*i + j)];
+			imgArray[3*(originalWidth*y + x) + 1]  = pixmapInput[3*(originalWidth*i + j) + 1];
+			imgArray[3*(originalWidth*y + x) + 2]  = pixmapInput[3*(originalWidth*i + j) + 2];
+		}
+	}
 }

@@ -40,7 +40,12 @@ void QTWindow::mousePressEvent (QMouseEvent * event)
 				Points::getInstance().setImagePoints(p1, p2, p3, p4);
 				cvm.setupMatrix();
 				cvm.solveEquation();
-				cvm.InvertMatrixH();
+				cvm.invertMatrixH();
+				int width, height;
+				BYTE  * outputArrayImage;
+				outputArrayImage = new BYTE[3 * imageInputWidth * imageInputHeight];
+				cvm.generateImageArray(outputArrayImage, pixmapInput, &width, &height, imageInputWidth, imageInputHeight);
+				saveImage("../imgs/output.jpg", outputArrayImage, imageInputWidth, imageInputHeight);
 				counter = 0;
 				break;
 			default:
@@ -67,4 +72,13 @@ void QTWindow::setupWindow(QTWindow * window, const char * title, const char * i
 	QPixmap pm(imagePath);
 	window->setPixmap(pm);
 	window->show();
+}
+
+void QTWindow::saveImage(const char * outputFilename, BYTE * imgData, int width, int height)
+{
+	ILuint imageID = ilGenImage();
+	ilBindImage(imageID);
+	ilTexImage(width, height, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, imgData);
+  	ilEnable(IL_FILE_OVERWRITE);
+	ilSave(IL_JPG, outputFilename);
 }

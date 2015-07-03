@@ -30,11 +30,14 @@ private:
 	VectorXf B;
 
 	MatrixXf H;
+	MatrixXf H_INV;
 
 public:
 	void setupMatrix();
 	void solveEquation();
-	void InvertMatrixH();
+	void invertMatrixH();
+	void generateImageArray(unsigned char * imgArray, unsigned char * pixmapInput, int * width, int * height, int originalWidth, int originalHeight);
+
 };
 
 #endif	
