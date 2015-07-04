@@ -65,13 +65,13 @@ void CVMath::invertMatrixH()
 	H_INV = H.inverse();
 }
 
-void CVMath::generateImageArray(unsigned char * imgArray, unsigned char * pixmapInput, int * width, int * height, int originalWidth, int originalHeight)
+unsigned char *  CVMath::generateImageArray(unsigned char * pixmapInput, int * width, int * height, int originalWidth, int originalHeight)
 {
 	//primeiro, vamos avaliar o tamanho da imagem através dos 4 cantos
 	VectorXf in(3);
 	VectorXf out;
 	
-	int minX = 0, minY = 0, maxX = 0, maxY = 0;
+	double minX = 0.0, minY = 0.0, maxX = 0.0, maxY = 0.0;
 
 	in << 0, 0, 1;
 	out = H_INV * in;
@@ -80,7 +80,7 @@ void CVMath::generateImageArray(unsigned char * imgArray, unsigned char * pixmap
 	minX = maxX = out(0);
 	minY = maxY = out(1);
 
-	in << 0, 600, 1;
+	in << 0, originalHeight, 1;
 	out = H_INV * in;
 	out /= out(2);
 		
@@ -94,7 +94,7 @@ void CVMath::generateImageArray(unsigned char * imgArray, unsigned char * pixmap
 	if (out(1) > maxY)
 		maxY = out(1);
 
-	in << 800, 600, 1;
+	in << originalWidth, originalHeight, 1;
 	out = H_INV * in;
 	out /= out(2);
 	
@@ -108,7 +108,7 @@ void CVMath::generateImageArray(unsigned char * imgArray, unsigned char * pixmap
 	if (out(1) > maxY)
 		maxY = out(1);
 
-	in << 800, 0, 1;
+	in << originalWidth, 0, 1;
 	out = H_INV * in;
 	out /= out(2);
 	
@@ -123,24 +123,31 @@ void CVMath::generateImageArray(unsigned char * imgArray, unsigned char * pixmap
 		maxY = out(1);
 
 	// calculando os valores de largura e altura da nova imagem
-	*width = maxX - minX;
-	*height = maxY - minY;
+	*height = 800;
+	*width = (maxX - minX)*(*height)/(maxY - minY);
 
+	unsigned char * imgArray = new unsigned char[3 * (*height) * (*width)];
+
+	double ratio = (maxX - minX)/(*width);
 	//gerando nova imagem;
-	for (int i = 0; i < originalHeight; i++)
+	for (int i = 0; i < *height; i++)
 	{
-		for (int j = 0; j < originalWidth; j++)
+		for (int j = 0; j < *width; j++)
 		{
-			in << j, i, 1;
-			out = H_INV * in;
+			in << minX + j*ratio, minY + i*ratio, 1;
+			out = H * in;
 			out /= out(2);
+			
+			int x = out(0);
+			int y = out(1);
 
-			int x = (maxX - out(0))*originalWidth/(*width);
-			int y = (maxY - out(1))*originalHeight/(*height);
-
-			imgArray[3*(originalWidth*y + x)]  = pixmapInput[3*(originalWidth*i + j)];
-			imgArray[3*(originalWidth*y + x) + 1]  = pixmapInput[3*(originalWidth*i + j) + 1];
-			imgArray[3*(originalWidth*y + x) + 2]  = pixmapInput[3*(originalWidth*i + j) + 2];
+			if ((x >= 0) && (y >= 0) && (x < originalWidth) && (y < originalHeight))
+			{	
+				imgArray[3*((*width)*i + j)] = pixmapInput[3*(originalWidth*y + x)];
+				imgArray[3*((*width)*i + j) + 1] = pixmapInput[3*(originalWidth*y + x) + 1];
+				imgArray[3*((*width)*i + j) + 2] = pixmapInput[3*(originalWidth*y + x) + 2];
+			}
 		}
 	}
+	return imgArray;
 }

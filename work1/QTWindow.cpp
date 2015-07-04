@@ -11,42 +11,36 @@ void QTWindow::mousePressEvent (QMouseEvent * event)
 {
 	if(event->button() == Qt::LeftButton)
 	{
-		// std::cout << event->x() << " " << event->y() << std::endl;
-		// int pixPos = event->y() * imageInputWidth + event->x();
-		// printf("%d\n", pixPos);
-		// printf("Color: %d %d %d\n", pixmapInput[3 * pixPos], pixmapInput[3 * pixPos + 1], pixmapInput[3 * pixPos + 2]);
 		CVMath cvm;
 		switch (counter) 
 		{
 			case 0:
-				std::cout << "P1\n";
 				p1 = std::make_pair((float) event->x(), (float)event->y());
 				counter++;
 				break;
 			case 1:
-				std::cout << "P2\n";
 				p2 = std::make_pair((float) event->x(), (float)event->y());
 				counter++;
 				break;
 			case 2:
-				std::cout << "P3\n";
 				p3 = std::make_pair((float) event->x(), (float)event->y());
 				counter++;
 				break;
 			case 3:
-				std::cout << "P4\n";
 				p4 = std::make_pair((float) event->x(), (float)event->y());
-				std::cout << "Computando Pontos: \n";
 				Points::getInstance().setImagePoints(p1, p2, p3, p4);
 				cvm.setupMatrix();
 				cvm.solveEquation();
 				cvm.invertMatrixH();
+				
 				int width, height;
 				BYTE  * outputArrayImage;
-				outputArrayImage = new BYTE[3 * imageInputWidth * imageInputHeight];
-				cvm.generateImageArray(outputArrayImage, pixmapInput, &width, &height, imageInputWidth, imageInputHeight);
-				saveImage("../imgs/output.jpg", outputArrayImage, imageInputWidth, imageInputHeight);
+				
+				outputArrayImage = cvm.generateImageArray(pixmapInput, &width, &height, imageInputWidth, imageInputHeight);
+				saveImage("../imgs/output.jpg", outputArrayImage, width, height);
+				
 				counter = 0;
+				
 				break;
 			default:
 				break;

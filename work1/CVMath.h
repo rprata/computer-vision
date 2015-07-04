@@ -3,6 +3,7 @@
 
 #include <eigen3/Eigen/Dense>
 #include "Points.h"
+#include "QTWindow.h"
 
 using Eigen::MatrixXf;
 using Eigen::VectorXf;
@@ -36,7 +37,7 @@ public:
 	void setupMatrix();
 	void solveEquation();
 	void invertMatrixH();
-	void generateImageArray(unsigned char * imgArray, unsigned char * pixmapInput, int * width, int * height, int originalWidth, int originalHeight);
+	unsigned char * generateImageArray(unsigned char * pixmapInput, int * width, int * height, int originalWidth, int originalHeight);
 
 };
 
