@@ -37,9 +37,27 @@ void QTWindow::mousePressEvent (QMouseEvent * event)
 				BYTE  * outputArrayImage;
 				
 				outputArrayImage = cvm.generateImageArray(pixmapInput, &width, &height, imageInputWidth, imageInputHeight);
-				saveImage("../imgs/output.jpg", outputArrayImage, width, height);
+				saveImage("../imgs/retificada.jpg", outputArrayImage, width, height);
 				
+				std::cout << "Imagem retificada salva em: ../imgs/retificada.jpg" << std::endl;
+
+				BYTE  * outputArrayImageInterpolation;
+				outputArrayImageInterpolation = cvm.generateImageArrayBilinearInterpolation(pixmapInput, &width, &height, imageInputWidth, imageInputHeight);
+				saveImage("../imgs/retificada-com-interpolacao-bilinear.jpg", outputArrayImageInterpolation, width, height);
+
+				std::cout << "Imagem com interpolacao bilinear salva em: ../imgs/retificada-com-interpolacao-bilinear.jpg" << std::endl;
+
+
+
+				BYTE  * outputArrayImageCrop;
+				outputArrayImageCrop = cvm.generateCropImageArrayBilinearInterpolation(pixmapInput, &width, &height, imageInputWidth, imageInputHeight);
+				saveImage("../imgs/crop-com-interpolacao-bilinear.jpg", outputArrayImageCrop, width, height);
+
+				std::cout << "Regiao de interesse com interpolacao bilinear salva em: ../imgs/crop-com-interpolacao-bilinear.jpg" << std::endl;
+
 				counter = 0;
+
+				exit(0);
 				
 				break;
 			default:
