@@ -352,39 +352,35 @@ unsigned char * CVMath::generateCropImageArrayBilinearInterpolation(unsigned cha
 			double iSup;
 			if ((x >= 0) && (y >= 0) && (x < originalWidth) && (y < originalHeight))
 			{	
+				//bilinear interpolation
+				unsigned char rInf = pixmapInput[3*((int) (y - 1)*originalWidth + (int) x)];
+				unsigned char rSup = pixmapInput[3*((int) (y - 1)*originalWidth + (int) x)];
 
-				if (j >= minX && i >= minY && j <= maxX && i <= maxY)
-				{
-					//bilinear interpolation
-					unsigned char rInf = pixmapInput[3*((int) (y - 1)*originalWidth + (int) x)];
-					unsigned char rSup = pixmapInput[3*((int) (y - 1)*originalWidth + (int) x)];
+				iInf = ((double) rInf*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) rInf*(x - floor(x))/(ceil(x) - floor(x)));
+				iSup = ((double) rSup*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) rSup*(x - floor(x))/(ceil(x) - floor(x)));
 
-					iInf = ((double) rInf*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) rInf*(x - floor(x))/(ceil(x) - floor(x)));
-					iSup = ((double) rSup*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) rSup*(x - floor(x))/(ceil(x) - floor(x)));
+				unsigned char r = (((double) iInf*(ceil(y) - y))/(ceil(y) - floor(y))) + ((double) iSup*(y - floor(y))/(ceil(y) - floor(y)));
 
-					unsigned char r = (((double) iInf*(ceil(y) - y))/(ceil(y) - floor(y))) + ((double) iSup*(y - floor(y))/(ceil(y) - floor(y)));
+				unsigned char gInf = pixmapInput[3*((int) (y - 1)*originalWidth + (int) x) + 1];
+				unsigned char gSup = pixmapInput[3*((int) (y - 1)*originalWidth + (int) x) + 1];
 
-					unsigned char gInf = pixmapInput[3*((int) (y - 1)*originalWidth + (int) x) + 1];
-					unsigned char gSup = pixmapInput[3*((int) (y - 1)*originalWidth + (int) x) + 1];
+				iInf = ((double) gInf*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) gInf*(x - floor(x))/(ceil(x) - floor(x)));
+				iSup = ((double) gSup*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) gSup*(x - floor(x))/(ceil(x) - floor(x)));
 
-					iInf = ((double) gInf*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) gInf*(x - floor(x))/(ceil(x) - floor(x)));
-					iSup = ((double) gSup*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) gSup*(x - floor(x))/(ceil(x) - floor(x)));
+				unsigned char g = (((double) iInf*(ceil(y) - y))/(ceil(y) - floor(y))) + ((double) iSup*(y - floor(y))/(ceil(y) - floor(y)));
 
-					unsigned char g = (((double) iInf*(ceil(y) - y))/(ceil(y) - floor(y))) + ((double) iSup*(y - floor(y))/(ceil(y) - floor(y)));
+				unsigned char bInf = pixmapInput[3*((int) (y - 1)*originalWidth + (int) x) + 2];
+				unsigned char bSup = pixmapInput[3*((int) (y + 1)*originalWidth + (int) x) + 2];
 
-					unsigned char bInf = pixmapInput[3*((int) (y - 1)*originalWidth + (int) x) + 2];
-					unsigned char bSup = pixmapInput[3*((int) (y + 1)*originalWidth + (int) x) + 2];
-
-					iInf = ((double) bInf*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) bInf*(x - floor(x))/(ceil(x) - floor(x)));
-					iSup = ((double) bSup*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) bSup*(x - floor(x))/(ceil(x) - floor(x)));
-					
-					unsigned char b = (((double) iInf*(ceil(y) - y))/(ceil(y) - floor(y))) + ((double) iSup*(y - floor(y))/(ceil(y) - floor(y)));
+				iInf = ((double) bInf*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) bInf*(x - floor(x))/(ceil(x) - floor(x)));
+				iSup = ((double) bSup*(ceil(x) - x))/(ceil(x) - floor(x)) + ((double) bSup*(x - floor(x))/(ceil(x) - floor(x)));
+				
+				unsigned char b = (((double) iInf*(ceil(y) - y))/(ceil(y) - floor(y))) + ((double) iSup*(y - floor(y))/(ceil(y) - floor(y)));
 
 
-					imgArray[3*((*width)*i + j)] = r;
-					imgArray[3*((*width)*i + j) + 1] = g;
-					imgArray[3*((*width)*i + j) + 2] = b;
-				}
+				imgArray[3*((*width)*i + j)] = r;
+				imgArray[3*((*width)*i + j) + 1] = g;
+				imgArray[3*((*width)*i + j) + 2] = b;
 			}
 		}
 	}
