@@ -1,7 +1,6 @@
 #ifndef __CVMATH_H__
 #define __CVMATH_H__
 
-#include <eigen3/Eigen/Dense>
 #include "Points.h"
 #include "QTWindow.h"
 

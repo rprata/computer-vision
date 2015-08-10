@@ -11,18 +11,19 @@ void CVMath::setupMatrix()
 	Line r3 = Points::getInstance().getR3();
 	Line r4 = Points::getInstance().getR4();
 	
-	l0 << r1.first, r1.second, 1;
-	l1 << r2.first, r2.second, 1;
-	l2 << r3.first, r3.second, 1;
-	l3 << r4.first, r4.second, 1;
+	l0 << r1.x, r1.y, r1.z;
+	l1 << r2.x, r2.y, r2.z;
+	l2 << r3.x, r3.y, r3.z;
+	l3 << r4.x, r4.y, r4.z;
 
-	x0 = l0.cross(l1);
-	std::cout << x0 << std::endl;
-	x1 = l2.cross(l3);
-	std::cout << x1 << std::endl;
+	Vector3d aux1;
+	aux1 = l0.cross(l1);
+	x0 << aux1(0)/aux1(2), aux1(1)/aux1(2), 1;
+	Vector3d aux2;
+	aux2 = l2.cross(l3);
+	x1 << aux2(0)/aux2(2), aux2(1)/aux2(2), 1;
 
-	l =  x1.cross(x0);
-	std::cout << l << std::endl;
+	l =  x0.cross(x1);
 
 
 }
@@ -41,6 +42,7 @@ void CVMath::invertMatrixHp()
 {
 	Hp_INV = MatrixXd(3, 3);
 	Hp_INV = Hp.inverse().eval();
+	std::cout << Hp_INV << std::endl;
 }
 
 unsigned char *  CVMath::generateImageArrayParallelLines(unsigned char * pixmapInput, int * width, int * height, int originalWidth, int originalHeight)

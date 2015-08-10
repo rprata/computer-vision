@@ -2,9 +2,17 @@
 #define __POINTS_H__
 
 #include <utility>
+#include <eigen3/Eigen/Dense>
 
-typedef std::pair <double , double> Line;
-typedef std::pair <double , double> Point;
+using Eigen::Vector3d;
+
+typedef struct _Line
+{
+    double x;
+    double y;
+    double z;
+
+} Line;
 
 class Points
 {
@@ -12,7 +20,6 @@ class Points
 private:
 	Points() {};
 	Line  r1, r2, r3, r4;
-    Point m_p1, m_p2, m_p3, m_p4, m_p5, m_p6, m_p7, m_p8;
 
 public:
 	static Points& getInstance()
@@ -28,12 +35,6 @@ public:
     Line getR2();
     Line getR3();
     Line getR4();
-
-    double * getR1eq();
-    double * getR2eq();
-    double * getR3eq();
-    double * getR4eq();
-
 
 	void setR1(std::pair <double, double> p1, std::pair <double, double> p2);
 	void setR2(std::pair <double, double> p1, std::pair <double, double> p2);
