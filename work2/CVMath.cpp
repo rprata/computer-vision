@@ -50,14 +50,14 @@ unsigned char *  CVMath::generateImageArrayParallelLines(unsigned char * pixmapI
 	double minX = 0.0, minY = 0.0, maxX = 0.0, maxY = 0.0;
 
 	in << 0, 0, 1;
-	out = Hp_INV * in;
+	out = Hp * in;
 	out /= out(2);
 
 	minX = maxX = out(0);
 	minY = maxY = out(1);
 
 	in << 0, originalHeight, 1;
-	out = Hp_INV * in;
+	out = Hp * in;
 	out /= out(2);
 		
 	if (out(0) < minX)
@@ -71,7 +71,7 @@ unsigned char *  CVMath::generateImageArrayParallelLines(unsigned char * pixmapI
 		maxY = out(1);
 
 	in << originalWidth, originalHeight, 1;
-	out = Hp_INV * in;
+	out = Hp * in;
 	out /= out(2);
 	
 	if (out(0) < minX)
@@ -85,7 +85,7 @@ unsigned char *  CVMath::generateImageArrayParallelLines(unsigned char * pixmapI
 		maxY = out(1);
 
 	in << originalWidth, 0, 1;
-	out = Hp_INV * in;
+	out = Hp * in;
 	out /= out(2);
 	
 	if (out(0) < minX)
@@ -111,7 +111,7 @@ unsigned char *  CVMath::generateImageArrayParallelLines(unsigned char * pixmapI
 		for (int j = 0; j < *width; j++)
 		{
 			in << minX + j*ratio, minY + i*ratio, 1;
-			out = Hp * in;
+			out = Hp_INV * in;
 			out /= out(2);
 			
 			int x = out(0);
