@@ -16,12 +16,8 @@ void CVMath::setupMatrix()
 	l2 << r3.x, r3.y, r3.z;
 	l3 << r4.x, r4.y, r4.z;
 
-	Vector3d aux1;
-	aux1 = l0.cross(l1);
-	x0 << aux1(0)/aux1(2), aux1(1)/aux1(2), 1;
-	Vector3d aux2;
-	aux2 = l2.cross(l3);
-	x1 << aux2(0)/aux2(2), aux2(1)/aux2(2), 1;
+	x0 = l0.cross(l1);
+	x1 = l2.cross(l3);
 
 	l =  x0.cross(x1);
 
@@ -33,7 +29,7 @@ void CVMath::generateHp()
 	Hp = MatrixXd(3, 3);
 	Hp << 1, 0, 0,
 	     0, 1, 0,
-	     l(0), l(1), l(2);
+	     l(0)/l(2), l(1)/l(2), 1;
 	std::cout << Hp << std::endl;
 
 }
