@@ -21,6 +21,27 @@ Line Points::getR4()
 	return r4;
 }
 
+
+Point Points::getP1()
+{
+	return p1;
+}
+
+Point Points::getP2()
+{
+	return p2;
+}
+
+Point Points::getP3()
+{
+	return p3;
+}
+
+Point Points::getP4()
+{
+	return p4;
+}
+
 void Points::setR1(std::pair <double, double> p1, std::pair <double, double> p2)
 {
 	Vector3d l1, l2;
@@ -63,4 +84,32 @@ void Points::setR4(std::pair <double, double> p1, std::pair <double, double> p2)
 	r4.x = res(0);
 	r4.y = res(1);
 	r4.z = res(2);
+}
+
+void Points::setP1(std::pair <double, double> p)
+{
+	p1.x = p.first;
+	p1.y = p.second;
+	p1.w = 1;
+}
+
+void Points::setP2(std::pair <double, double> p)
+{
+	p2.x = p.first;
+	p2.y = p.second;
+	p2.w = 1;
+}
+
+void Points::setP3(std::pair <double, double> p)
+{
+	p3.x = p.first;
+	p3.y = p.second;
+	p3.w = 1;
+}
+
+void Points::setP4(std::pair <double, double> p)
+{
+	p4.x = p.first;
+	p4.y = p.second;
+	p4.w = 1;
 }

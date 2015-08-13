@@ -21,6 +21,9 @@ private:
 	Vector3d l2;
 	Vector3d l3;
 
+	Vector3d m0;
+	Vector3d m1;
+
 	Vector3d x0;
 	Vector3d x1;
 
@@ -30,11 +33,10 @@ private:
 	MatrixXd Hp_INV;
 
 public:
-	void setupMatrix();
-	void generateHp();
-	void invertMatrixHp();
+	void setupMatrixM1();
+	void setupMatrixM2();
 	unsigned char * generateImageArrayParallelLines(unsigned char * pixmapInput, int * width, int * height, int originalWidth, int originalHeight);
-	
+	unsigned char * generateImageArrayOrthoLines(unsigned char * pixmapInput, int * width, int * height, int originalWidth, int originalHeight);
 };
 
 #endif	

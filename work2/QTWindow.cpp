@@ -50,20 +50,25 @@ void QTWindow::mousePressEvent (QMouseEvent * event)
 			case 7:
 				p8 = std::make_pair((double) event->x(), (double)event->y());
 				Points::getInstance().setR4(p7, p8);
-				counter++;
-
-				std::cout << "show time!" << std::endl;
-				
-				cvm.setupMatrix();
-				cvm.generateHp();
-				cvm.invertMatrixHp();
-
+				counter++;				
 				BYTE  * outputArrayImage;
 				int width;
 				int height;
 
-				outputArrayImage = cvm.generateImageArrayParallelLines(pixmapInput, &width, &height, imageInputWidth, imageInputHeight);
-				saveImage("../imgs/work2/retificada-retas-paralelas.jpg", outputArrayImage, width, height);
+				if (method == 0)
+				{
+					std::cout << "show time! retificacao afim" << std::endl;			
+					cvm.setupMatrixM1();
+					outputArrayImage = cvm.generateImageArrayParallelLines(pixmapInput, &width, &height, imageInputWidth, imageInputHeight);
+					saveImage("../imgs/work2/retificada-retas-paralelas.jpg", outputArrayImage, width, height);
+				}
+				else 
+				{
+					std::cout << "show time! retificacao similaridade" << std::endl;			
+					cvm.setupMatrixM2();
+					outputArrayImage = cvm.generateImageArrayOrthoLines(pixmapInput, &width, &height, imageInputWidth, imageInputHeight);
+					saveImage("../imgs/work2/retificada-ortho.jpg", outputArrayImage, width, height);
+				}
 				exit(0);
 				break;
 			default:
@@ -99,4 +104,9 @@ void QTWindow::saveImage(const char * outputFilename, BYTE * imgData, int width,
 	ilTexImage(width, height, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, imgData);
   	ilEnable(IL_FILE_OVERWRITE);
 	ilSave(IL_JPG, outputFilename);
+}
+
+void QTWindow::setMethod(int m)
+{
+	method = m;
 }
