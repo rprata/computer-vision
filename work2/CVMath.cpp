@@ -60,15 +60,20 @@ void CVMath::setupMatrixM2()
 	KKT << x(0), x(1),
 		x(1), x(2);
 
-	Hp = MatrixXd(3, 3);
+	MatrixXd HHT = MatrixXd(3, 3);
+	HHT << x(0), x(1), 0,
+		   x(1), x(2), 0,
+		   0, 0, 0;
 
 	MatrixXd aux = MatrixXd(2, 2); 
-	aux = KKT.llt().matrixU();
+	aux = HHT.llt().matrixU();
 
 	std::cout << x << std::endl;
 	std::cout << aux << std::endl;
-
 	
+	Hp = MatrixXd(3, 3);
+	
+	//add 1 ao final para se tornar inversivel
 	Hp << aux(0,0), aux(0,1), 0,
 		0, aux(1, 1), 0,
 		0, 0, 1;
