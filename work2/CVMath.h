@@ -3,10 +3,13 @@
 
 #include "Points.h"
 #include "QTWindow.h"
+#include <eigen3/Eigen/SVD>
+#include <eigen3/Eigen/Core>
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using Eigen::Vector3d;
+using Eigen::JacobiSVD;
 
 class CVMath
 {

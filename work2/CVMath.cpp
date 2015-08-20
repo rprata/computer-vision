@@ -51,19 +51,32 @@ void CVMath::setupMatrixM2()
 	LT_M << l0(0)*m0(0), l0(0)*m0(1) + l0(1)*m0(0), l0(1)*m0(1),
 			l1(0)*m1(0), l1(0)*m1(1) + l1(1)*m1(0), l1(1)*m1(1);
 
-	MatrixXd ZERO = MatrixXd(2, 1);
-	ZERO << 0, 0;
 
-	MatrixXd H_HT = LT_M.ldlt().solve(ZERO);
-	std::cout << H_HT << std::endl;
+	JacobiSVD<MatrixXd> svdA (LT_M, Eigen::ComputeFullV);
+
+	VectorXd x = svdA.matrixV().col(2);
+
+	MatrixXd KKT = MatrixXd(2, 2);
+	KKT << x(0), x(1),
+		x(1), x(2);
 
 	Hp = MatrixXd(3, 3);
-	Hp << H_HT(0), H_HT(1), 0,
-		H_HT(1), 1, 0,
-		0, 0, 0;
+
+	MatrixXd aux = MatrixXd(2, 2); 
+	aux = KKT.llt().matrixU();
+
+	std::cout << x << std::endl;
+	std::cout << aux << std::endl;
+
+	
+	Hp << aux(0,0), aux(0,1), 0,
+		0, aux(1, 1), 0,
+		0, 0, 1;
+	std::cout << Hp << std::endl;
 
 	Hp_INV = MatrixXd(3, 3);
 	Hp_INV = Hp.inverse().eval();
+	std::cout << Hp_INV << std::endl;
 
 }
 
