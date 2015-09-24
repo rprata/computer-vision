@@ -45,8 +45,8 @@ vectorPairPoints Utils::generateMatchingPoints(const string& argv1, const string
 		if( dist > max_dist ) max_dist = dist;
 	}
 
-	cout << "-- Max dist : " << max_dist << endl;
-	cout << "-- Min dist : " << min_dist << endl;
+	// cout << "-- Max dist : " << max_dist << endl;
+	// cout << "-- Min dist : " << min_dist << endl;
 
 	//-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist,
 	//-- or a small arbitary value ( 0.02 ) in the event that min_dist is very
@@ -91,4 +91,102 @@ void Utils::printVectorPairPoints(void)
 		cout << "vector 2: " << m_vectorPairPoints.at(i).second << endl;
 
 	}
+}
+
+void Utils::calculateDLT(void)
+{
+	MatrixXd A(m_vectorPairPoints.size()*2, 9);
+
+    for(unsigned i = 0; i < m_vectorPairPoints.size(); i++) 
+    {
+    	pair <Vector3d, Vector3d> point = m_vectorPairPoints.at(i);
+
+        A.row(i * 2) << 0, 0, 0, -point.first(0), -point.first(1), -1, point.second(1)*point.first(0), point.second(1)*point.first(1), point.second(1);
+        A.row(i * 2 + 1) << point.first(0), point.first(1), 1, 0, 0, 0, -point.second(0)*point.first(0), -point.second(0)*point.first(1), -point.second(0);
+    }
+
+    JacobiSVD<MatrixXd> SVD(A, Eigen::ComputeThinV);
+    VectorXd h = SVD.matrixV().col(SVD.matrixV().cols() - 1);
+    Hn <<    h(0), h(1), h(2),
+            h(3), h(4), h(5),
+            h(6), h(7), h(8);
+    
+    generateTMatrix();
+
+    H = Ti.inverse().eval() * Hn * Tii;
+}
+
+void Utils::printMatrixHn(void)
+{
+	cout << Hn << endl;
+}
+
+void Utils::printMatrixH(void)
+{
+	cout << H << endl;
+}
+
+void Utils::generateTMatrix(void)
+{
+    double u_avg = 0;
+    double v_avg = 0;
+    int u_sum = 0;
+    int v_sum = 0;
+
+    for(unsigned i = 0; i < m_vectorPairPoints.size(); i++) 
+    {
+        pair<Vector3d, Vector3d> point = m_vectorPairPoints.at(i);
+        u_sum += point.first(0);
+        v_sum += point.first(1);
+    }
+
+    u_avg = u_sum / (double)m_vectorPairPoints.size();
+    v_avg = v_sum / (double)m_vectorPairPoints.size();
+
+
+    double sum = 0;
+    double s = 0;
+
+    for(unsigned i = 0; i < m_vectorPairPoints.size(); i++) 
+    {
+        pair<Vector3d, Vector3d> point;
+        sum += sqrt(pow(((double)point.first(0) - u_avg), 2) + pow(((double)point.first(1) - v_avg), 2));
+    }
+
+    s = (sqrt(2) * (double)m_vectorPairPoints.size()) / sum;
+
+    Ti << s, 0, -s*u_avg,
+         0, s, -s*v_avg,
+         0, 0, 1;
+
+    u_avg = 0;
+    v_avg = 0;
+    u_sum = 0;
+    v_sum = 0;
+
+    for(unsigned i = 0; i < m_vectorPairPoints.size(); i++) 
+    {
+        pair<Vector3d, Vector3d> point = m_vectorPairPoints.at(i);
+        u_sum += point.second(0);
+        v_sum += point.second(1);
+    }
+
+    u_avg = u_sum / (double)m_vectorPairPoints.size();
+    v_avg = v_sum / (double)m_vectorPairPoints.size();
+
+
+    sum = 0;
+    s = 0;
+
+    for(unsigned i = 0; i < m_vectorPairPoints.size(); i++) 
+    {
+        pair<Vector3d, Vector3d> point;
+        sum += sqrt(pow(((double)point.second(0) - u_avg), 2) + pow(((double)point.second(1) - v_avg), 2));
+    }
+
+    s = (sqrt(2) * (double)m_vectorPairPoints.size()) / sum;
+
+    Tii << s, 0, -s*u_avg,
+         0, s, -s*v_avg,
+         0, 0, 1;
 }

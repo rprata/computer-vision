@@ -10,7 +10,8 @@ int main(int argc, char ** argv)
   	}
 
   	Utils::getInstance()->generateMatchingPoints(argv[1], argv[2]);
-  	Utils::getInstance()->printVectorPairPoints();
-
+  	// Utils::getInstance()->printVectorPairPoints();
+  	Utils::getInstance()->calculateDLT();
+  	Utils::getInstance()->printMatrixH();
 	return 0;
 }
