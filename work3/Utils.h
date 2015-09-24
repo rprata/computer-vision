@@ -50,6 +50,7 @@ public:
     void calculateDLT(void); //according table 4.1 - page 91
     void printMatrixHn(void);
     void printMatrixH(void);
+    MatrixXd getMatrixH(void);
     void generateTMatrix(void); //according 4.4 - page 107
 
 };

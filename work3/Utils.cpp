@@ -126,6 +126,11 @@ void Utils::printMatrixH(void)
 	cout << H << endl;
 }
 
+MatrixXd Utils::getMatrixH(void)
+{
+	return H;
+}
+
 void Utils::generateTMatrix(void)
 {
     double u_avg = 0;
