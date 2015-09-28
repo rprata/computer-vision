@@ -1,9 +1,12 @@
 #include "Image.h"
+#include "Utils.h"
 
 #define OUTPUT_HEIGHT 480
 
 Image::Image(pair<char * , MatrixXd > arg1, pair< char * , MatrixXd > arg2)
 {
+
+#ifndef USING_QT
 	ilInit();
 	if (!ilLoadImage((const ILstring)arg1.first)) 
 	{
@@ -31,7 +34,18 @@ Image::Image(pair<char * , MatrixXd > arg1, pair< char * , MatrixXd > arg2)
 
 	ilCopyPixels(0, 0, 0, image2InputWidth, image2InputHeight, 1, IL_RGB, IL_UNSIGNED_BYTE, pixmapInputImage2);
 	H2 = arg2.second;
-	
+#else
+    inputImage1 = QImage(arg1.first);
+  	image1InputWidth  = inputImage1.width();
+	image1InputHeight = inputImage1.height();
+    H1 = arg1.second;
+
+    inputImage2 = QImage(arg2.first);
+    image2InputWidth  = inputImage2.width();
+	image2InputHeight = inputImage2.height();
+	H2 = arg2.second;
+#endif
+
 	getBounds();
 
 }
@@ -45,13 +59,14 @@ void Image::getBounds(void)
 	// first image
 	in << 0, 0, 1;
 	out = H1 * in;
+	// out /= out(2);	
 
 	minX = maxX = out(0);
 	minY = maxY = out(1);
 
 	in << 0, image1InputHeight, 1;
 	out = H1 * in;
-	out /= out(2);	
+	// out /= out(2);	
 	
 	if (out(0) < minX)
 		minX = out(0);
@@ -65,7 +80,7 @@ void Image::getBounds(void)
 
 	in << image1InputWidth, image1InputHeight, 1;
 	out = H1 * in;
-	out /= out(2);
+	// out /= out(2);
 
 	if (out(0) < minX)
 		minX = out(0);
@@ -79,7 +94,7 @@ void Image::getBounds(void)
 
 	in << image1InputWidth, 0, 1;
 	out = H1 * in;
-	out /= out(2);
+	// out /= out(2);
 	
 	if (out(0) < minX)
 		minX = out(0);
@@ -94,8 +109,7 @@ void Image::getBounds(void)
 	// second image
 	in << 0, 0, 1;
 	out = H2 * in;
-	out /= out(2);
-	cout << out << endl;
+	// out /= out(2);
 
 	if (out(0) < minX)
 		minX = out(0);
@@ -109,8 +123,7 @@ void Image::getBounds(void)
 
 	in << 0, image2InputHeight, 1;
 	out = H2 * in;
-	out /= out(2);
-	cout << out << endl;
+	// out /= out(2);
 
 	if (out(0) < minX)
 		minX = out(0);
@@ -124,8 +137,7 @@ void Image::getBounds(void)
 
 	in << image2InputWidth, image2InputHeight, 1;
 	out = H2 * in;
-	out /= out(2);
-	cout << out << endl;
+	// out /= out(2);
 
 	if (out(0) < minX)
 		minX = out(0);
@@ -139,8 +151,7 @@ void Image::getBounds(void)
 
 	in << image2InputWidth, 0, 1;
 	out = H2 * in;
-	out /= out(2);
-	cout << out << endl;
+	// out /= out(2);
 
 	if (out(0) < minX)
 		minX = out(0);
@@ -168,13 +179,11 @@ void Image::DrawPanoramicPicture(const string & outputPanoramic)
 	double ratio = (bound.maxX - bound.minX)/(double)(imageOutputWidth);
 
 	unsigned char * imgArray = new unsigned char[3 * (imageOutputHeight) * (imageOutputWidth)];
-
 	VectorXd in(3);
 	VectorXd out;
 
 	//first image
 	MatrixXd H1_INV = H1.inverse().eval();
-	cout << H1_INV << endl;
 	for (int i = 0; i < imageOutputHeight; i++)
 	{
 		for (int j = 0; j < imageOutputWidth; j++)
@@ -197,13 +206,12 @@ void Image::DrawPanoramicPicture(const string & outputPanoramic)
 
 	//second image
 	MatrixXd H2_INV = H2.inverse().eval();
-	cout << H2_INV << endl;
 	for (int i = 0; i < imageOutputHeight; i++)
 	{
 		for (int j = 0; j < imageOutputWidth; j++)
 		{
 			in << bound.minX + j*ratio, bound.minY + i*ratio, 1;
-			out = H2_INV * in;
+			out = H2 * in;
 			out /= out(2);
 			
 			int x = out(0);
@@ -223,5 +231,143 @@ void Image::DrawPanoramicPicture(const string & outputPanoramic)
 	ilTexImage(imageOutputWidth, imageOutputHeight, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, imgArray);
   	ilEnable(IL_FILE_OVERWRITE);
 	ilSave(IL_JPG, outputPanoramic.c_str());
+
+}
+
+void Image::DrawPanoramicPictureUsingQT(const string & outputPanoramic)
+{
+	imageOutputHeight = OUTPUT_HEIGHT;
+	imageOutputWidth = (bound.maxX - bound.minX)*((double)imageOutputHeight)/(bound.maxY - bound.minY);
+
+	double ratio = (bound.maxX - bound.minX)/(double)(imageOutputWidth);
+
+	VectorXd in(3);
+	VectorXd out;
+
+	QImage newImage = QImage(imageOutputWidth,  imageOutputHeight, QImage::Format_ARGB32);
+
+    QPainter painter;
+    painter.begin(&newImage);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setBackgroundMode(Qt::TransparentMode);
+    QPen pen;
+
+    //first image
+	MatrixXd H1_INV = H1.inverse().eval();
+	for (int i = 0; i < imageOutputHeight; i++)
+	{
+		for (int j = 0; j < imageOutputWidth; j++)
+		{
+            in << bound.minY + j*ratio, bound.minX + i*ratio, 1;
+			out = H1_INV * in;
+			out /= out(2);
+			
+            if (out(0,0) >= 0 && out(0,0) <= inputImage1.width() - 1
+                    && out(1,0) >= 0 && out(1,0) <= inputImage1.height() - 1)
+            {
+                // Point lies inside the input Image
+
+                // Do interpolation
+                QColor c = interpolate(inputImage1, out);
+                //QRgb clrCurrent( inputImage.pixel( y(0,0), y(1,0) ) );
+                pen.setColor(c);
+                pen.setWidth(1);
+                pen.setCapStyle(Qt::RoundCap);
+                painter.setPen(pen);
+                painter.drawPoint(j, i);
+
+            }
+            /*else
+            {
+                // Point lies outside the input Image
+                QColor clrCurrent(0,0,0);
+                pen.setColor(clrCurrent);
+                pen.setWidth(1);
+                pen.setCapStyle(Qt::RoundCap);
+                painter.setPen(pen);
+                painter.drawPoint(j, i);
+            }*/
+        }
+  	}
+    
+    //second image
+	MatrixXd H2_INV = H2.inverse().eval();
+	for (int i = 0; i < imageOutputHeight; i++)
+	{
+		for (int j = 0; j < imageOutputWidth; j++)
+		{
+            in << bound.minY + j*ratio, bound.minX + i*ratio, 1;
+			out = H2_INV * in;
+			out /= out(2);
+			
+            if (out(0,0) >= 0 && out(0,0) <= inputImage2.width() - 1
+                    && out(1,0) >= 0 && out(1,0) <= inputImage2.height() - 1)
+            {
+                // Point lies inside the input Image
+
+                // Do interpolation
+                QColor c = interpolate(inputImage2, out);
+                //QRgb clrCurrent( inputImage.pixel( y(0,0), y(1,0) ) );
+                pen.setColor(c);
+                pen.setWidth(1);
+                pen.setCapStyle(Qt::RoundCap);
+                painter.setPen(pen);
+                painter.drawPoint(j, i);
+
+            }
+            /*else
+            {
+                // Point lies outside the input Image
+                QColor clrCurrent(0,0,0);
+                pen.setColor(clrCurrent);
+                pen.setWidth(1);
+                pen.setCapStyle(Qt::RoundCap);
+                painter.setPen(pen);
+                painter.drawPoint(j, i);
+            }*/
+        }
+      }
+
+    painter.end();
+
+    QImageWriter writer(outputPanoramic.c_str());
+    writer.write(newImage);
+}
+
+
+QColor Image::interpolate(QImage img, MatrixXd y)
+{
+    double mappedX;
+    double mappedY;
+    int mappedXFloor, mappedXCeil, mappedYFloor, mappedYCeil;
+
+    mappedX = y(0,0)/y(2,0);
+    mappedY = y(1,0)/y(2,0);
+
+    mappedXFloor = floor(mappedX);
+    mappedXCeil = ceil(mappedX);
+    mappedYFloor = floor(mappedY);
+    mappedYCeil = ceil(mappedY);
+
+    QColor leftTop (img.pixel(mappedXFloor, mappedYFloor));
+    QColor rightTop (img.pixel(mappedXCeil, mappedYFloor));
+    QColor leftBottom (img.pixel(mappedXFloor, mappedYCeil));
+    QColor rightBottom (img.pixel(mappedXCeil, mappedYCeil));
+
+    QColor a ( (((mappedXCeil - y(0,0)) * leftTop.red()) + ( (y(0,0) - mappedXFloor) * rightTop.red())),
+               (((mappedXCeil - y(0,0)) * leftTop.green()) + ( (y(0,0) - mappedXFloor) * rightTop.green())),
+               (((mappedXCeil - y(0,0)) * leftTop.blue()) + ( (y(0,0) - mappedXFloor) * rightTop.blue()))
+               );
+    QColor b ( (((mappedXCeil - y(0,0)) * leftBottom.red()) + ( (y(0,0) - mappedXFloor) * rightBottom.red())),
+               (((mappedXCeil - y(0,0)) * leftBottom.green()) + ( (y(0,0) - mappedXFloor) * rightBottom.green())),
+               (((mappedXCeil - y(0,0)) * leftBottom.blue()) + ( (y(0,0) - mappedXFloor) * rightBottom.blue()))
+               );
+
+    QColor c ( ((mappedYCeil - y(1,0)) * a.red() + ( (y(1,0) - mappedYFloor) * b.red() )),
+               ((mappedYCeil - y(1,0)) * a.green() + ( (y(1,0) - mappedYFloor) * b.green() )),
+               ((mappedYCeil - y(1,0)) * a.blue() + ( (y(1,0) - mappedYFloor) * b.blue() ))
+               );
+
+    return c;
 
 }

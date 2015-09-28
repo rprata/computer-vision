@@ -18,8 +18,9 @@ using namespace std;
 using namespace Eigen;
 using namespace cv;
 
+#define USING_QT
 
-#define MIN_HESSIAN 400
+#define MIN_HESSIAN 5000
 
 typedef vector< pair<Vector3d, Vector3d> > vectorPairPoints;
 

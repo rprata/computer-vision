@@ -5,6 +5,13 @@
 #include <string>
 #include <utility> 
 
+#include <QImage>
+#include <QString>
+#include <QColor>
+#include <QSize>
+#include <QPainter>
+#include <QImageWriter>
+
 #include <eigen3/Eigen/Dense>
 
 #include <IL/il.h>
@@ -35,12 +42,18 @@ private:
 	MatrixXd H2;
 	Bound bound;
 
+	QImage inputImage1;
+	QImage inputImage2;
+
 	int imageOutputHeight, imageOutputWidth;
 
 public:
 	Image(pair< char *, MatrixXd > arg1, pair< char *, MatrixXd > arg2);
 	void getBounds(void);
 	void DrawPanoramicPicture(const string & outputPanoramic);
+	void DrawPanoramicPictureUsingQT(const string & outputPanoramic);
+	QColor interpolate(QImage img, MatrixXd y);
+
 };
 
 #endif

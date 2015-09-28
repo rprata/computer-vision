@@ -15,6 +15,11 @@ int main(int argc, char ** argv)
   	Utils::getInstance()->calculateDLT();
   	// Utils::getInstance()->printMatrixH();
   	Image img(make_pair(argv[1], Matrix<double, 3, 3>::Identity()), make_pair(argv[2], Utils::getInstance()->getMatrixH()));
-  	img.DrawPanoramicPicture("output.jpg");
+
+#ifdef USING_QT
+  	img.DrawPanoramicPictureUsingQT("output.jpg");
+#else
+    img.DrawPanoramicPicture("output.jpg");
+#endif
 	return 0;
 }

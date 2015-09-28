@@ -105,6 +105,7 @@ void Utils::calculateDLT(void)
         A.row(i * 2 + 1) << point.first(0), point.first(1), 1, 0, 0, 0, -point.second(0)*point.first(0), -point.second(0)*point.first(1), -point.second(0);
     }
 
+    // cout << A << endl;
     JacobiSVD<MatrixXd> SVD(A, Eigen::ComputeThinV);
     VectorXd h = SVD.matrixV().col(SVD.matrixV().cols() - 1);
     Hn <<    h(0), h(1), h(2),
