@@ -78,7 +78,6 @@ vectorPairPoints Utils::generateMatchingPoints(const string& argv1, const string
     	m_vectorPairPoints.push_back(make_pair(aux_1, aux_2));
 	}
 
-
 	return m_vectorPairPoints;
 }
 
@@ -220,6 +219,8 @@ Matrix3d Utils::ransac(double N, double threshold, bool adaptativeSearch, int ra
         vectorPairPoints randomPairsIndexes = generateRandPairs(randomSize, pairsQuantity);
 
         Matrix3d Htemp = generateMatrixH2(randomPairsIndexes);
+        cout << Htemp << endl;
+        cout << "==============" << endl;
 
         inliers = getRansacInliers(Htemp, threshold);
         if(inliers.size() > maxInliers.size()){
@@ -268,9 +269,11 @@ Matrix3d Utils::ransac(double N, double threshold, bool adaptativeSearch, int ra
 vectorPairPoints Utils::generateRandPairs(int numberOfCorrespondences, int size)
 {
     vectorPairPoints l_vectorPairPoints;
+    cout << "size : " << size << endl;
     for (int j = 0; j < numberOfCorrespondences; j++)
     {
         int correspondence = rand() % size;
+        cout << correspondence << endl;
         l_vectorPairPoints.push_back(m_vectorPairPoints.at(correspondence));
     }
     return l_vectorPairPoints;

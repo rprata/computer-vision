@@ -22,7 +22,7 @@ using namespace cv;
 
 #define USING_QT
 
-#define MIN_HESSIAN 5000
+#define MIN_HESSIAN 200
 
 typedef vector< pair<Vector3d, Vector3d> > vectorPairPoints;
 
