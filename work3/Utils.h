@@ -7,6 +7,8 @@
 #include <vector>
 #include <cmath>
 
+#include <QVector>
+
 #include <eigen3/Eigen/Dense>
 
 #include "opencv2/core/core.hpp"
@@ -53,6 +55,18 @@ public:
     void printMatrixH(void);
     MatrixXd getMatrixH(void);
     void generateTMatrix(void); //according 4.4 - page 107
+
+    //RANSAC 
+    vectorPairPoints generateRandPairs(int numberOfCorrespondences, int size);
+    MatrixXd generateMatrixH2(vectorPairPoints vec);
+
+    //I understand, but it's difficult to implement. Based Flavio's homework (sorry :´()
+    QVector<int> getRansacInliers(Matrix3d H, float threshold);
+    float squaredEuclideanDistance(Vector3d a, Vector3d b);
+    Matrix3d gaussNewton(Matrix3d H, QVector<Vector3d> pointsFirstImage, QVector<Vector3d> pointsSecondImage);
+    Matrix3d ransac(double N, double threshold, bool adaptativeSearch, int randomSize);
+
+
 
 };
 
