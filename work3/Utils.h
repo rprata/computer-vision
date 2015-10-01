@@ -22,7 +22,7 @@ using namespace cv;
 
 #define USING_QT
 
-#define MIN_HESSIAN 200
+#define MIN_HESSIAN 250
 
 typedef vector< pair<Vector3d, Vector3d> > vectorPairPoints;
 
@@ -64,7 +64,7 @@ public:
     QVector<int> getRansacInliers(Matrix3d H, float threshold);
     float squaredEuclideanDistance(Vector3d a, Vector3d b);
     Matrix3d gaussNewton(Matrix3d H, QVector<Vector3d> pointsFirstImage, QVector<Vector3d> pointsSecondImage);
-    Matrix3d ransac(double N, double threshold, bool adaptativeSearch, int randomSize);
+    Matrix3d ransac(double N, double threshold, int randomSize);
 
 
 

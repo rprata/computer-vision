@@ -15,7 +15,7 @@ int main(int argc, char ** argv)
   	// Utils::getInstance()->calculateDLT();
   	// Utils::getInstance()->printMatrixH();
 
-    Matrix3d Hf = Utils::getInstance()->ransac(200, 0.05, true, 4);
+    Matrix3d Hf = Utils::getInstance()->ransac(200, 0.05, 4);
     Matrix3d H;
 
     H << (double)Hf(0,0), (double)Hf(0,1), (double)Hf(0,2),

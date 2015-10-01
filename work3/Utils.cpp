@@ -204,8 +204,8 @@ void Utils::generateTMatrix(void)
          0, 0, 1;
 }
 
-
-Matrix3d Utils::ransac(double N, double threshold, bool adaptativeSearch, int randomSize)
+#include "stdio.h"
+Matrix3d Utils::ransac(double N, double threshold, int randomSize)
 {
     int pairsQuantity = m_vectorPairPoints.size();
     int ransacCounter = 0;
@@ -214,7 +214,7 @@ Matrix3d Utils::ransac(double N, double threshold, bool adaptativeSearch, int ra
     double e = 0.5;
     double p = 0.99;
     QVector<Vector3d> bestInliersA, bestInliersB;
-    while(ransacCounter < N)
+    while(ransacCounter++ < N)
     {
         vectorPairPoints randomPairsIndexes = generateRandPairs(randomSize, pairsQuantity);
 
@@ -226,13 +226,15 @@ Matrix3d Utils::ransac(double N, double threshold, bool adaptativeSearch, int ra
         if(inliers.size() > maxInliers.size()){
             maxInliers = inliers;
             Hfinal = Htemp;
+        
+            e = 1 - ((double)inliers.size()/(double)pairsQuantity);
+            N = (double)log(1-p)/(double)log(1 - pow(1 - e, randomSize));
+            if (N > 10000)
+                N = 10000; //evita ficar preso no loop em alguns casos
         }
-        if(adaptativeSearch){
-            e = 1 - ((float)inliers.size()/pairsQuantity);
-            N = log(1-p)/log(1 - pow(1 - e, randomSize));
-        }
-        ransacCounter++;
-        cout << N << endl;
+        cout << "ransacCounter " << ransacCounter << endl;
+        cout << "N " << N << endl;
+
     }
     for(int i =0 ; i < maxInliers.size(); i++ )
     {
@@ -378,8 +380,9 @@ Matrix3d Utils::gaussNewton(Matrix3d H, QVector<Vector3d> pointsFirstImage, QVec
         deltaX = (JT*J).inverse().eval()*(-JT)*fh;
 
         cout << "Erro mais externo: " << fabs(squaredNormTemp - squaredNorm) << endl;
+        cout << "Erro mais externo: " << 100000000*fabs(squaredNormTemp - squaredNorm) << endl;
 
-        if ( counter > 1 && fabs(squaredNormTemp - squaredNorm) < 1e-8 )
+        if ( counter >= 0 && fabs(squaredNormTemp - squaredNorm)*100000000 < 8 )
             break;
 
         VectorXd diff = X - fh;
