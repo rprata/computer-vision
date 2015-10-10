@@ -29,6 +29,9 @@ void Utils::generateCameraMatrix(void)
     P2 = MatrixXd(3,4);
     P1 = Rt1;
     P2 = Rt2;
+
+    P1 = K1 * Rt1;
+    P2 = K2 * Rt2;
 }
 
 Matrix3d Utils::generateK(double focalDistance, double pixelSizeX, double pixelSizeY, double centerPxX, double centerPxY)
@@ -155,8 +158,8 @@ Matrix3d Utils::ransac(double N, double threshold, int randomSize)
         
             e = 1 - ((double)inliers.size()/(double)pairsQuantity);
             N = (double)log(1-p)/(double)log(1 - pow(1 - e, randomSize));
-            if (N > 10000)
-                N = 10000; //evita ficar preso no loop em alguns casos
+            // if (N > 10000)
+            //     N = 10000; //evita ficar preso no loop em alguns casos
         }
         cout << "ransacCounter " << ransacCounter << endl;
         cout << "N " << N << endl;
@@ -191,6 +194,11 @@ Matrix3d Utils::ransac(double N, double threshold, int randomSize)
         cout << "Erro de -" << (( FfinalA.norm() - FfinalB.norm() ) / FfinalA.norm())*100 << "%" << endl;
     }
 
+    // F << -1.53484e-07, -1.49698e-06, 0.00180966, // Forcing F to be manual here, it's ok! We have some error in ransac method :(
+    //          1.23965e-06, -5.18379e-08, -0.000459381,
+    //          -0.00117125, 0.000696289, -0.320655;
+    
+    F = Ffinal;
     return Ffinal;
 }
 
@@ -528,3 +536,105 @@ void Utils::generateP(void)
 
 }
 
+bool Utils::read3DPointsFromObj(const string& filename, int max_point_count)
+{
+    std::ifstream inFile;
+    inFile.open(filename.c_str());
+
+    if (!inFile.is_open())
+    {
+        std::cerr << "Error: Could not open obj input file: " << filename << std::endl;
+        return false;
+    }
+
+    points3D.clear();
+
+    int i = 0;
+    while (inFile)
+    {
+        std::string str;
+
+        if (!std::getline(inFile, str))
+        {
+            std::cerr << "Error: Problems when reading obj file: " << filename << std::endl;
+            return false;
+        }
+
+        if (str[0] == 'v')
+        {
+            std::stringstream ss(str);
+            std::vector <std::string> record;
+
+            char c;
+            double x, y, z;
+            ss >> c >> x >> y >> z;
+
+            Vector3d p(x, y, z);
+            points3D.push_back(p);
+        }
+
+        if (i++ > max_point_count)
+            break;
+    }
+
+    inFile.close();
+    return true;
+}
+
+void Utils::obtain2DPointsCorrespondenceFrom3DPoints(void)
+{
+    points2D_l1.clear();
+    points2D_l2.clear();
+
+    for (unsigned i = 0; i < points3D.size(); i++)
+    {
+        Vector3d p3d = points3D.at(i);
+        Vector3d x0 = P1 * p3d.homogeneous();
+        Vector3d x1 = P2 * p3d.homogeneous();
+
+        x0 /= x0[2];
+        x1 /= x1[2];
+
+        points2D_l1.push_back(x0);
+        points2D_l2.push_back(x1);
+    }
+
+}
+
+QVector<VectorXd> Utils::get3DPointsByTriangulation(MatrixXd P, MatrixXd Pl)
+{
+    QVector<VectorXd> points;
+    Matrix4d A;
+    for (int i=0; i < points2D_l1.size(); i++)
+    {
+        Vector3d a = points2D_l1.at(i);
+        Vector3d b = points2D_l2.at(i);
+
+        Vector4d v0, v1, v2, v3;
+        v0 = a(0) * P.row(2) - P.row(0);
+        v1 = a(1) * P.row(2) - P.row(1);
+        v2 = b(0) * Pl.row(2) - Pl.row(0);
+        v3 = b(1) * Pl.row(2) - Pl.row(1);
+
+        A << v0.transpose(), v1.transpose(), v2.transpose(), v3.transpose();
+        JacobiSVD<MatrixXd> SVD(A, ComputeFullV);
+        VectorXd X = SVD.matrixV().col(SVD.matrixV().cols() - 1);
+        X /= X(3);
+
+        points.push_back(X);
+    }
+
+    return points;
+
+}
+
+void Utils::saveInObj(const string filename, const QVector<VectorXd>  points)
+{
+    ofstream file;
+    file.open(filename.c_str());
+    for (int i=0; i < points.size(); i++)
+    {
+        file << "v " << points.at(i).transpose().eval() << std::endl;
+    }
+    file.close();
+}

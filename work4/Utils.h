@@ -7,6 +7,9 @@
 #include <vector>
 #include <cmath>
 
+#include <iostream>
+#include <fstream>
+
 #include <QVector>
 
 #include <eigen3/Eigen/Dense>
@@ -57,6 +60,11 @@ private:
     Matrix3d E;
     vector<MatrixXd> Pls;
 
+    vector<Vector3d> points3D;
+    QVector<Vector3d> points2D_l1;
+    QVector<Vector3d> points2D_l2;
+    ofstream file;
+
 public:
 	static Utils * getInstance()
     {
@@ -83,7 +91,22 @@ public:
     Matrix3d generateF(vectorPairPoints vec);
     void generateE(void);
     void generateP(void);
+    bool read3DPointsFromObj(const string& filename, int max_point_count);
+    void obtain2DPointsCorrespondenceFrom3DPoints(void);
 
+    QVector<VectorXd> get3DPointsByTriangulation(MatrixXd P, MatrixXd Pl);
+
+    void saveInObj(const string filename, QVector<VectorXd> points3D);
+    
+    vector<MatrixXd> getPls(void) 
+    {
+        return Pls;
+    }
+
+    Matrix3d getK1(void) 
+    {
+        return K1;
+    }
 
 };
 
