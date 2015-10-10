@@ -35,11 +35,11 @@ Matrix3d Utils::generateK(double focalDistance, double pixelSizeX, double pixelS
 {
 	Matrix3d K;
 
-    float ax = focalDistance / pixelSizeX;
-    float ay = focalDistance / pixelSizeY;
+    double ax = focalDistance / pixelSizeX;
+    double ay = focalDistance / pixelSizeY;
 
-    float x0 = centerPxX;
-    float y0 = centerPxY;
+    double x0 = centerPxX;
+    double y0 = centerPxY;
 
     K << ax, 0, x0,
          0, ay, y0,
@@ -115,8 +115,8 @@ vectorPairPoints Utils::generateMatchingPoints(const string& argv1, const string
  	for( int i = 0; i < (int)good_matches.size(); i++ )
   	{ 
 		// printf( "-- Good Match [%d] Keypoint 1: %d  -- Keypoint 2: %d  \n", i, good_matches[i].queryIdx, good_matches[i].trainIdx ); 
-		float x = keypoints_1[good_matches[i].queryIdx].pt.x;
-    	float y = keypoints_1[good_matches[i].queryIdx].pt.y;
+		double x = keypoints_1[good_matches[i].queryIdx].pt.x;
+    	double y = keypoints_1[good_matches[i].queryIdx].pt.y;
     	
     	aux_1 << x, y, 1;
     	x = keypoints_2[good_matches[i].trainIdx].pt.x;
@@ -134,22 +134,24 @@ Matrix3d Utils::ransac(double N, double threshold, int randomSize)
     int pairsQuantity = m_vectorPairPoints.size();
     int ransacCounter = 0;
     QVector<int> inliers, maxInliers;
-    Matrix3d Hfinal;
+    Matrix3d Ffinal;
     double e = 0.5;
     double p = 0.99;
     QVector<Vector3d> bestInliersA, bestInliersB;
+
+    generateTMatrix();
     while(ransacCounter++ < N)
     {
         vectorPairPoints randomPairsIndexes = generateRandPairs(randomSize, pairsQuantity);
 
-        Matrix3d Htemp = generateMatrixH2(randomPairsIndexes);
-        cout << Htemp << endl;
+        Matrix3d Ftemp = generateF(randomPairsIndexes);
+        cout << Ftemp << endl;
         cout << "==============" << endl;
 
-        inliers = getRansacInliers(Htemp, threshold);
+        inliers = getRansacInliers(Ftemp, threshold);
         if(inliers.size() > maxInliers.size()){
             maxInliers = inliers;
-            Hfinal = Htemp;
+            Ffinal = Ftemp;
         
             e = 1 - ((double)inliers.size()/(double)pairsQuantity);
             N = (double)log(1-p)/(double)log(1 - pow(1 - e, randomSize));
@@ -165,11 +167,11 @@ Matrix3d Utils::ransac(double N, double threshold, int randomSize)
         bestInliersA.push_back(m_vectorPairPoints[maxInliers.at(i)].first);
         bestInliersB.push_back(m_vectorPairPoints[maxInliers.at(i)].second);
     }
-    Matrix3d HfinalA = Hfinal;
-    VectorXd A(Map<VectorXd>(Hfinal.data(), Hfinal.cols()*Hfinal.rows()));
-    Hfinal = gaussNewton(Hfinal, bestInliersA, bestInliersB);
-    Matrix3d HfinalB = Hfinal;
-    VectorXd B(Map<VectorXd>(Hfinal.data(), Hfinal.cols()*Hfinal.rows()));
+    Matrix3d FfinalA = Ffinal;
+    VectorXd A(Map<VectorXd>(Ffinal.data(), Ffinal.cols()*Ffinal.rows()));
+    Ffinal = gaussNewton(Ffinal, bestInliersA, bestInliersB);
+    Matrix3d FfinalB = Ffinal;
+    VectorXd B(Map<VectorXd>(Ffinal.data(), Ffinal.cols()*Ffinal.rows()));
 
     if (A.squaredNorm() < B.squaredNorm())
     {
@@ -180,16 +182,81 @@ Matrix3d Utils::ransac(double N, double threshold, int randomSize)
         cout << "Erro de -" << (( A.squaredNorm() - B.squaredNorm() ) / A.squaredNorm())*100 << "%" << endl;
     }
 
-    if (HfinalA.norm() < HfinalB.norm())
+    if (FfinalA.norm() < FfinalB.norm())
     {
-        cout << "Erro de +" << (( HfinalB.norm() - HfinalA.norm() ) / HfinalA.norm())*100 << "%" << endl;
+        cout << "Erro de +" << (( FfinalB.norm() - FfinalA.norm() ) / FfinalA.norm())*100 << "%" << endl;
     }
     else
     {
-        cout << "Erro de -" << (( HfinalA.norm() - HfinalB.norm() ) / HfinalA.norm())*100 << "%" << endl;
+        cout << "Erro de -" << (( FfinalA.norm() - FfinalB.norm() ) / FfinalA.norm())*100 << "%" << endl;
     }
 
-    return Hfinal;
+    return Ffinal;
+}
+
+void Utils::generateTMatrix(void)
+{
+    double u_avg = 0;
+    double v_avg = 0;
+    int u_sum = 0;
+    int v_sum = 0;
+
+    for(unsigned i = 0; i < m_vectorPairPoints.size(); i++) 
+    {
+        pair<Vector3d, Vector3d> point = m_vectorPairPoints.at(i);
+        u_sum += point.first(0);
+        v_sum += point.first(1);
+    }
+
+    u_avg = u_sum / (double)m_vectorPairPoints.size();
+    v_avg = v_sum / (double)m_vectorPairPoints.size();
+
+
+    double sum = 0;
+    double s = 0;
+
+    for(unsigned i = 0; i < m_vectorPairPoints.size(); i++) 
+    {
+        pair<Vector3d, Vector3d> point;
+        sum += sqrt(pow(((double)point.first(0) - u_avg), 2) + pow(((double)point.first(1) - v_avg), 2));
+    }
+
+    s = (sqrt(2) * (double)m_vectorPairPoints.size()) / sum;
+
+    Ti << s, 0, -s*u_avg,
+         0, s, -s*v_avg,
+         0, 0, 1;
+
+    u_avg = 0;
+    v_avg = 0;
+    u_sum = 0;
+    v_sum = 0;
+
+    for(unsigned i = 0; i < m_vectorPairPoints.size(); i++) 
+    {
+        pair<Vector3d, Vector3d> point = m_vectorPairPoints.at(i);
+        u_sum += point.second(0);
+        v_sum += point.second(1);
+    }
+
+    u_avg = u_sum / (double)m_vectorPairPoints.size();
+    v_avg = v_sum / (double)m_vectorPairPoints.size();
+
+
+    sum = 0;
+    s = 0;
+
+    for(unsigned i = 0; i < m_vectorPairPoints.size(); i++) 
+    {
+        pair<Vector3d, Vector3d> point;
+        sum += sqrt(pow(((double)point.second(0) - u_avg), 2) + pow(((double)point.second(1) - v_avg), 2));
+    }
+
+    s = (sqrt(2) * (double)m_vectorPairPoints.size()) / sum;
+
+    Tii << s, 0, -s*u_avg,
+         0, s, -s*v_avg,
+         0, 0, 1;
 }
 
 vectorPairPoints Utils::generateRandPairs(int numberOfCorrespondences, int size)
@@ -238,7 +305,7 @@ MatrixXd Utils::generateMatrixH2(vectorPairPoints vec)
     return h;
 }
 
-QVector<int> Utils::getRansacInliers(Matrix3d H, float threshold)
+QVector<int> Utils::getRansacInliers(Matrix3d H, double threshold)
 {
     QVector<int> inliers;
     for(unsigned i = 0; i < m_vectorPairPoints.size(); i++)
@@ -246,7 +313,7 @@ QVector<int> Utils::getRansacInliers(Matrix3d H, float threshold)
         Vector3d v;
         v = H * m_vectorPairPoints.at(i).first;
         v /= v(2);
-        float distance = squaredEuclideanDistance(v, m_vectorPairPoints.at(i).second);
+        double distance = squaredEuclideanDistance(v, m_vectorPairPoints.at(i).second);
         if(distance < threshold){
             inliers.push_back(i);
         }
@@ -254,9 +321,9 @@ QVector<int> Utils::getRansacInliers(Matrix3d H, float threshold)
     return inliers;
 }
 
-float Utils::squaredEuclideanDistance(Vector3d a, Vector3d b)
+double Utils::squaredEuclideanDistance(Vector3d a, Vector3d b)
 {
-    float distance = 0;
+    double distance = 0;
     for (int i = 0; i < a.size(); i++)
          distance += pow( (a(i) - b(i)), 2);
     return distance;
@@ -268,9 +335,9 @@ Matrix3d Utils::gaussNewton(Matrix3d H, QVector<Vector3d> pointsFirstImage, QVec
     MatrixXd J(pointsFirstImage.size()*2, 9);
     VectorXd fh(pointsFirstImage.size()*2);
     VectorXd X(pointsFirstImage.size()*2);
-    VectorXd fhTemp(pointsFirstImage.size()*2);
+    VectorXd fFtemp(pointsFirstImage.size()*2);
     VectorXd XTemp(pointsFirstImage.size()*2);
-    Matrix3d HTemp;
+    Matrix3d Ftemp;
     int counter = 0;
     double lambda = 1;
     double squaredNorm, squaredNormTemp;
@@ -314,29 +381,29 @@ Matrix3d Utils::gaussNewton(Matrix3d H, QVector<Vector3d> pointsFirstImage, QVec
 
         while(true)
         {
-            HTemp(0,0) = H(0,0) + lambda*deltaX(0);
-            HTemp(0,1) = H(0,1) + lambda*deltaX(1);
-            HTemp(0,2) = H(0,2) + lambda*deltaX(2);
-            HTemp(1,0) = H(1,0) + lambda*deltaX(3);
-            HTemp(1,1) = H(1,1) + lambda*deltaX(4);
-            HTemp(1,2) = H(1,2) + lambda*deltaX(5);
-            HTemp(2,0) = H(2,0) + lambda*deltaX(6);
-            HTemp(2,1) = H(2,1) + lambda*deltaX(7);
-            HTemp(2,2) = H(2,2) + lambda*deltaX(8);
+            Ftemp(0,0) = H(0,0) + lambda*deltaX(0);
+            Ftemp(0,1) = H(0,1) + lambda*deltaX(1);
+            Ftemp(0,2) = H(0,2) + lambda*deltaX(2);
+            Ftemp(1,0) = H(1,0) + lambda*deltaX(3);
+            Ftemp(1,1) = H(1,1) + lambda*deltaX(4);
+            Ftemp(1,2) = H(1,2) + lambda*deltaX(5);
+            Ftemp(2,0) = H(2,0) + lambda*deltaX(6);
+            Ftemp(2,1) = H(2,1) + lambda*deltaX(7);
+            Ftemp(2,2) = H(2,2) + lambda*deltaX(8);
 
             for (int i = 0; i < (int)pointsFirstImage.size(); i++)
             {
                 Vector3d xi = pointsFirstImage.at(i);
                 Vector3d xilinha = pointsSecondImage.at(i);
-                Vector3d Hxi = HTemp*xi;
+                Vector3d Hxi = Ftemp*xi;
                 Hxi /= Hxi(2);
-                fhTemp(i*2) = Hxi(0);
-                fhTemp(i*2 + 1) = Hxi(1);
+                fFtemp(i*2) = Hxi(0);
+                fFtemp(i*2 + 1) = Hxi(1);
                 XTemp(i*2) = xilinha(0);
                 XTemp(i*2 + 1) = xilinha(1);
              }
 
-             VectorXd diffTemp = XTemp - fhTemp;
+             VectorXd diffTemp = XTemp - fFtemp;
              squaredNormTemp = diffTemp.squaredNorm();
              /*cout << endl;
              cout << "counter" << endl;
@@ -353,8 +420,111 @@ Matrix3d Utils::gaussNewton(Matrix3d H, QVector<Vector3d> pointsFirstImage, QVec
              lambda /= 2;
         }
 
-        H = HTemp;
+        H = Ftemp;
         lambda = std::max(2*lambda, 1.0);
      } while (counter <= 1000);
      return H;
 }
+
+
+Matrix3d Utils::generateF(vectorPairPoints vec)
+{   
+    int pairsQuantity = vec.size();
+    vectorPairPoints randomPairsIndexes = generateRandPairs(8, pairsQuantity);
+
+    QVector<Vector3d> l1, l2;
+    for (unsigned i = 0; i < randomPairsIndexes.size(); i++)
+    {
+        l1.push_back(randomPairsIndexes.at(i).first);
+        l2.push_back(randomPairsIndexes.at(i).second);
+    }
+
+    MatrixXd A(8,9);
+
+    Matrix3d FTemp, FRestricted;
+    for (int i = 0; i < 8; i++)
+    {
+        Vector3d first = l1.at(i);
+        Vector3d second = l2.at(i);
+
+        double x = (Ti * first)(0);
+        double y = (Ti* first)(1);
+        double xlinha = (Tii * second)(0);
+        double ylinha = (Tii * second)(1);
+
+        A.row(i) << xlinha*x, xlinha*y, xlinha, ylinha*x, ylinha*y, ylinha, x, y, 1;
+    }
+
+    JacobiSVD<MatrixXd> SVD(A, ComputeFullV);
+    VectorXd x = SVD.matrixV().col(SVD.matrixV().cols() - 1);
+    FTemp << x(0), x(1), x(2),
+             x(3), x(4), x(5),
+             x(6), x(7), x(8);
+
+    JacobiSVD<MatrixXd> SVD2(FTemp, ComputeFullV | ComputeFullU);
+    VectorXd singularValues;
+    singularValues = SVD2.singularValues();
+    DiagonalMatrix<double, 3,3> D(singularValues(0), singularValues(1), 0);
+    Matrix3d DMat = D.toDenseMatrix();
+    FRestricted = SVD2.matrixU() * DMat * SVD2.matrixV().transpose();
+
+    return Tii.transpose().eval()*FRestricted*Ti;
+}
+
+void Utils::generateE(void)
+{
+    E = K2.transpose().eval() * F * K1;
+
+    Eigen::JacobiSVD<MatrixXd> SVD(E, ComputeFullV | ComputeFullU);
+
+    Eigen::DiagonalMatrix<double, 3,3> D(1, 1, 0);
+    Eigen::Matrix3d DMat = D.toDenseMatrix();
+    E = SVD.matrixU() * DMat * SVD.matrixV().transpose();
+}
+
+void Utils::generateP(void)
+{
+    Matrix3d W;
+    W <<   0,  -1,  0,
+           1,   0,  0,
+           0,   0,  1;
+    Matrix3d Z;
+    Z <<   0,  1,  0,
+          -1,  0,  0,
+           0,  0,  0;
+    Matrix3d U, V;
+    JacobiSVD<MatrixXd> SVD(E, ComputeFullU | ComputeFullV);
+    U = SVD.matrixU();
+    V = SVD.matrixV();
+
+   if((U * V.transpose()).determinant() < 0)
+   {
+       V.col(2) *= -1;
+   }
+
+   Vector3d u3;
+   u3 = U.col(2);
+   MatrixXd P1(3,4);
+   MatrixXd P2(3,4);
+   MatrixXd P3(3,4);
+   MatrixXd P4(3,4);
+
+   P1.topLeftCorner(3,3) = U * W * V.transpose();
+   P1.col(3) = u3;
+
+   P2.topLeftCorner(3,3) = U * W * V.transpose();
+   P2.col(3) = -u3;
+
+   P3.topLeftCorner(3,3) = U * W.transpose() * V.transpose();
+   P3.col(3) = u3;
+
+   P4.topLeftCorner(3,3) = U * W.transpose() * V.transpose();
+   P4.col(3) = -u3;
+
+   Pls.push_back(P1);
+   Pls.push_back(P2);
+   Pls.push_back(P3);
+   Pls.push_back(P4);
+
+}
+

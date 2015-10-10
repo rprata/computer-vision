@@ -49,7 +49,14 @@ private:
     MatrixXd Rt2;
     Vector3d T1;
     Vector3d T2;
-	
+
+    Matrix3d Ti;
+    Matrix3d Tii;
+
+    Matrix3d F;
+    Matrix3d E;
+    vector<MatrixXd> Pls;
+
 public:
 	static Utils * getInstance()
     {
@@ -63,14 +70,19 @@ public:
     void generateCameraMatrix(void);
     Matrix3d generateK(double focalDistance, double pixelSizeX, double pixelSizeY, double centerPxX, double centerPxY);
     vectorPairPoints generateMatchingPoints(const string& argv1, const string& argv2);
+    void generateTMatrix(void); //according 4.4 - page 107
 
     //RANSAC 
     vectorPairPoints generateRandPairs(int numberOfCorrespondences, int size);
     MatrixXd generateMatrixH2(vectorPairPoints vec);
-    QVector<int> getRansacInliers(Matrix3d H, float threshold);
-    float squaredEuclideanDistance(Vector3d a, Vector3d b);
+    QVector<int> getRansacInliers(Matrix3d H, double threshold);
+    double squaredEuclideanDistance(Vector3d a, Vector3d b);
     Matrix3d gaussNewton(Matrix3d H, QVector<Vector3d> pointsFirstImage, QVector<Vector3d> pointsSecondImage);
     Matrix3d ransac(double N, double threshold, int randomSize);
+    
+    Matrix3d generateF(vectorPairPoints vec);
+    void generateE(void);
+    void generateP(void);
 
 
 };
